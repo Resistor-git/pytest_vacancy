@@ -121,7 +121,6 @@ def insert_engines():
         # print(the_engine_params)
         list_of_engines.append(the_engine_params)
 
-
     with con:
         cur.executemany("INSERT INTO Engines (engine, power, type) VALUES (?, ?, ?)", list_of_engines)
 
