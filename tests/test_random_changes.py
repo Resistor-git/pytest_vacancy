@@ -31,6 +31,7 @@ def test_change_ships_properties(copy_db):
 
     # change either weapon or hull or engine, based on random_number
     random_number = randint(1, 3)
+    
     if random_number == 1:
         # change weapon
         print(f"\nrandom_number = {random_number}, changing weapon in Ships table")
@@ -58,6 +59,7 @@ def test_change_ships_properties(copy_db):
         # cur.executemany expects ONE list (or tuple) of tuples as a wildcard, like ('weapon-5', 'ship-105')
         with con:
             cur.executemany("UPDATE Ships SET weapon = ? WHERE ship = ?", ship_weapon_tuple)
+    
     elif random_number == 2:
         # change hull
         print(f"\nrandom_number = {random_number}, changing hull in Ships table")
@@ -79,7 +81,7 @@ def test_change_ships_properties(copy_db):
         # cur.executemany expects ONE list (or tuple) of tuples as a wildcard, like ('hull-5', 'ship-105')
         with con:
             cur.executemany("UPDATE Ships SET hull = ? WHERE ship = ?", ship_hull_tuple)
-    
+
     elif random_number == 3:
         # change engine
         print(f"\nrandom_number = {random_number}, changing engine in Ships table")
@@ -111,20 +113,20 @@ def test_change_weapons_hulls_engines_properties(copy_db):
     con = sqlite3.connect(copy_db)
     cur = con.cursor()
 
-    random_number = randint(1, 4)
+    random_number = randint(1, 3)
+    
     if random_number == 1:
         # change columns in Weapons table
         print(f"\nrandom_number = {random_number}, changing properties in Weapons table")
         # attmept to make code a little more flexible, without hardcoded number of rows
         # fetchall() returns a list of tuples, like [(15,)]
         quantity_of_rows_weapons = cur.execute("SELECT COUNT(*) FROM Weapons").fetchall()[0][0]
-        #print("\n", quantity_of_rows)
 
         for i in range(1, quantity_of_rows_weapons + 1):
             # "weapon" is used as a pointer in table, to show cur.execute which row should be changed
             weapon = "weapon-" + str(i)
             # max n = number of columns which can be changed (only one of them will be changed)
-            n = randint(1, 5)
+            n = randint(1, 3)
             if n == 1:
                 print(f"\nn = {n}, changing reload_speed in Weapons table for {weapon}")
                 with con:
@@ -145,13 +147,13 @@ def test_change_weapons_hulls_engines_properties(copy_db):
                 print(f"\nn = {n}, changing count in Weapons table for {weapon}")
                 with con:
                     cur.execute("UPDATE Weapons SET count = :count WHERE weapon = :weapon", {"count" : randint(1, 20), "weapon" : weapon})
+    
     elif random_number == 2:
         # change Hulls table
         print(f"\nrandom_number = {random_number}, changing properties in Weapons table")
         # attmept to make code a little more flexible, without hardcoded number of rows
         # fetchall() returns a list of tuples, like [(15,)]
         quantity_of_rows_hulls = cur.execute("SELECT COUNT(*) FROM Hulls").fetchall()[0][0]
-        #print("\n", quantity_of_rows)
 
         for i in range(1, quantity_of_rows_hulls + 1):
             # "hull" is used as a pointer in table, to show cur.execute which row should be changed
@@ -170,12 +172,27 @@ def test_change_weapons_hulls_engines_properties(copy_db):
                 print(f"\nn = {n}, changing capacity in Hulls table for {hull}")
                 with con:
                     cur.execute("UPDATE Hulls SET capacity = :capacity WHERE hull = :hull", {"capacity" : randint(1, 20), "hull" : hull})
-
+    
     elif random_number == 3:
-        pass
-    elif random_number == 4:
-        pass
+        # change Engines table
+        print(f"\nrandom_number = {random_number}, changing properties in Engines table")
+        # attmept to make code a little more flexible, without hardcoded number of rows
+        # fetchall() returns a list of tuples, like [(15,)]
+        quantity_of_rows_engines = cur.execute("SELECT COUNT(*) FROM Engines").fetchall()[0][0]
 
+        for i in range(1, quantity_of_rows_engines + 1):
+            # "engine" is used as a pointer in table, to show cur.execute which row should be changed
+            # max "n" = number of columns which can be changed (only one of them will be changed)
+            engine = "engine-" + str(i)
+            n = randint(1, 2)
+            if n == 1:
+                print(f"\nn = {n}, changing power in Engines table for {engine}")
+                with con:
+                    cur.execute("UPDATE Engines SET power = :power WHERE engine = :engine", {"power" : randint(1, 20), "engine" : engine})
+            elif n == 2:
+                print(f"\nn = {n}, changing type in Engines table for {engine}")
+                with con:
+                    cur.execute("UPDATE Engines SET type = :type WHERE engine = :engine", {"type" : randint(1, 20), "engine" : engine})
 
 
 
