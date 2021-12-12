@@ -19,7 +19,11 @@ def copy_db():
 
 
 def test_change_ships_properties(copy_db):
-    """takes the result of copy_db() and makes random changes in it"""
+    """changes columns weapon, hull, engine in Ships table;
+    takes the result of copy_db() and makes random changes in it
+    'Для каждого корабля меняется на случайный один из компонентов: корпус, орудие или двигатель' - не уверен, что правильно понял. Я сделал так, что у всех кораблей
+    меняется одинаковый компонент: корпус, орудие или двигатель.
+    """
     # print("\nMYDEBUG", copy_db)
     # print("\nMYDEBUG", type(copy_db))
     con = sqlite3.connect(copy_db)
@@ -100,64 +104,73 @@ def test_change_ships_properties(copy_db):
         
         assert 1 == 1
 
+
 # may be buggy; does it take the original copy or copy modified by test_change_ships_properties ???
 def test_change_weapons_hulls_engines_properties(copy_db):
-    """takes the result of copy_db() and makes random change in random property of each component (weapons, hulls, engines)"""
+    """takes the result of copy_db() and makes random change in random property for each row of tables Weapons, Hulls, Engines"""
     con = sqlite3.connect(copy_db)
     cur = con.cursor()
 
-    # change columns in Weapons table
-    # attmept to make code a little more flexible, without hardcoded number of rows
-    # fetchall() returns a list of tuples, like [(15,)]
-    quantity_of_rows = cur.execute("SELECT COUNT(*) FROM Weapons").fetchall()[0][0]
-    #print("\n", quantity_of_rows)
-
     random_number = randint(1, 4)
     if random_number == 1:
-        # change Weapons
-        # list_of_weapons = []
+        # change columns in Weapons table
         print(f"\nrandom_number = {random_number}, changing properties in Weapons table")
-        for i in range(1, quantity_of_rows):
-            weapon = "weapon-" + str(i)
-            # list_of_weapons.append(weapon)
+        # attmept to make code a little more flexible, without hardcoded number of rows
+        # fetchall() returns a list of tuples, like [(15,)]
+        quantity_of_rows_weapons = cur.execute("SELECT COUNT(*) FROM Weapons").fetchall()[0][0]
+        #print("\n", quantity_of_rows)
 
-            n = 1
-            # n = randint(1, 5)
+        for i in range(1, quantity_of_rows_weapons + 1):
+            # "weapon" is used as a pointer in table, to show cur.execute which row should be changed
+            weapon = "weapon-" + str(i)
+            # max n = number of columns which can be changed (only one of them will be changed)
+            n = randint(1, 5)
             if n == 1:
-                print(f"\nn = {n}, changing reload_speed in Weapons table")
+                print(f"\nn = {n}, changing reload_speed in Weapons table for {weapon}")
                 with con:
                     cur.execute("UPDATE Weapons SET reload_speed = :reload_speed WHERE weapon = :weapon", {"reload_speed" : randint(1, 20), "weapon" : weapon})
             elif n == 2:
-                print(f"\nn = {n}, changing rotation_spee in Weapons table")
+                print(f"\nn = {n}, changing rotation_speed in Weapons table for {weapon}")
                 with con:
                     cur.execute("UPDATE Weapons SET rotation_speed = :rotation_speed WHERE weapon = :weapon", {"rotation_speed" : randint(1, 20), "weapon" : weapon})
             elif n == 3:
-                print(f"\nn = {n}, changing diameter in Weapons table")
+                print(f"\nn = {n}, changing diameter in Weapons table for {weapon}")
                 with con:
                     cur.execute("UPDATE Weapons SET diameter = :diameter WHERE weapon = :weapon", {"diameter" : randint(1, 20), "weapon" : weapon})
             elif n == 4:
-                print(f"\nn = {n}, changing power_volley in Weapons table")
+                print(f"\nn = {n}, changing power_volley in Weapons table for {weapon}")
                 with con:
                     cur.execute("UPDATE Weapons SET power_volley = :power_volley WHERE weapon = :weapon", {"power_volley" : randint(1, 20), "weapon" : weapon})
             elif n == 5:
-                print(f"\nn = {n}, changing count in Weapons table")
+                print(f"\nn = {n}, changing count in Weapons table for {weapon}")
                 with con:
                     cur.execute("UPDATE Weapons SET count = :count WHERE weapon = :weapon", {"count" : randint(1, 20), "weapon" : weapon})
-
-        # weapons_properties = []
-        # for weapon in list_of_weapons:
-        #     # class instance: Weapon(weapon, reload_speed, rotation_speed, diameter, power_volley, count)
-        #     weapon_instance = Weapon(weapon, randint(1, 20), randint(1, 20), randint(1, 20), randint(1, 20), randint(1, 20))
-        #     print(weapon_instance)
-        #I CAN'T IMPORT my_classes, SO...
-
-
-
-        
-        # with con:
-        #     cur.executemany("UPDATE Weapons SET {column_name} = :column_value WHERE weapon = :weapon", {"column_value" : randint(1, 20), "weapon" : })
     elif random_number == 2:
-        pass
+        # change Hulls table
+        print(f"\nrandom_number = {random_number}, changing properties in Weapons table")
+        # attmept to make code a little more flexible, without hardcoded number of rows
+        # fetchall() returns a list of tuples, like [(15,)]
+        quantity_of_rows_hulls = cur.execute("SELECT COUNT(*) FROM Hulls").fetchall()[0][0]
+        #print("\n", quantity_of_rows)
+
+        for i in range(1, quantity_of_rows_hulls + 1):
+            # "hull" is used as a pointer in table, to show cur.execute which row should be changed
+            # max "n" = number of columns which can be changed (only one of them will be changed)
+            hull = "hull-" + str(i)
+            n = randint(1, 3)
+            if n == 1:
+                print(f"\nn = {n}, changing armor in Hulls table for {hull}")
+                with con:
+                    cur.execute("UPDATE Hulls SET armor = :armor WHERE hull = :hull", {"armor" : randint(1, 20), "hull" : hull})
+            elif n == 2:
+                print(f"\nn = {n}, changing type in Hulls table for {hull}")
+                with con:
+                    cur.execute("UPDATE Hulls SET type = :type WHERE hull = :hull", {"type" : randint(1, 20), "hull" : hull})
+            elif n == 3:
+                print(f"\nn = {n}, changing capacity in Hulls table for {hull}")
+                with con:
+                    cur.execute("UPDATE Hulls SET capacity = :capacity WHERE hull = :hull", {"capacity" : randint(1, 20), "hull" : hull})
+
     elif random_number == 3:
         pass
     elif random_number == 4:
