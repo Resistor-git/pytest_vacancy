@@ -18,6 +18,7 @@ def copy_db():
     return db_copy_for_tst
 
 
+# I don't actually understand how 'autouse=True' works. But without it the function doesn't execute.
 @pytest.fixture()
 def original_db():
     """returns path for original database"""
@@ -100,7 +101,6 @@ def change_weapons_hulls_engines_properties(copy_db):
     # attmept to make code a little more flexible, without hardcoded number of rows
     # fetchall() returns a list of tuples, like [(15,)]
     quantity_of_rows_weapons = cur.execute("SELECT COUNT(*) FROM Weapons").fetchall()[0][0]
-    print('!!!!!!!!!!!!!!!!', quantity_of_rows_weapons)
 
     for i in range(1, quantity_of_rows_weapons + 1):
         # "weapon" is used as a pointer in table, to show cur.execute which row should be changed
