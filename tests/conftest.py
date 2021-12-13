@@ -171,3 +171,144 @@ def change_weapons_hulls_engines_properties(copy_db):
             print(f"\nn = {n}, changing type in Engines table for {engine}")
             with con:
                 cur.execute("UPDATE Engines SET type = :type WHERE engine = :engine", {"type" : randint(1, 20), "engine" : engine})
+
+
+
+
+
+
+
+
+
+
+
+# def what_changed_in_ships(copy_db, original_db, metafunc):
+#     """Checks if weapon or hull or engine was changed for each ship in table Ships"""
+#     # connection to original database
+#     con_orig = sqlite3.connect(original_db)
+#     cur_orig = con_orig.cursor()
+
+#     data_orig = cur_orig.execute("SELECT * FROM Ships").fetchall()
+#     # print("original", data_orig)
+
+#     # connection to temporary copy with changes
+#     con_temp = sqlite3.connect(copy_db)
+#     cur_temp = con_temp.cursor()
+
+#     data_copy = cur_temp.execute("SELECT * FROM Ships").fetchall()
+#     # print("copy:", data_copy)
+
+#     # create list with all differences between original and modified databases
+#     # differences is a list of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
+#     i = 0
+#     differences = []
+#     for row in data_orig:
+#         differences.append((data_orig[i], data_copy[i]))
+#         i += 1
+#     # print(differences)
+
+#     for difference in differences:
+#         # difference is tuple of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
+#         print(difference)
+#         # print('original', difference[0])
+#         # print('copy', difference[1])
+#         # compare each element of tuple to another element of tuple, in other words compare every property of ship from original db with every property of ship from temporary db
+#         for n in range(0, len(differences[0][0])):
+#             if difference[0][n] != difference[1][n]:
+#                 # Ship-x, property-y (data from temp db)
+#                 #   expected property-z (from original db), was property-y (from temp db)
+
+#                 # difference[0] - original, difference[1] - temporary
+#                 print(f"""{difference[1][0]}, {difference[1][n]}\n    expected {difference[0][n]}, was {difference[1][n]}""")
+
+#                 # assert difference[0][n] == difference[1][n], f"{difference[1][0]}, {difference[1][n]}\n    expected {difference[0][n]}, was {difference[1][n]}"
+#                 original = difference[0][n]
+#                 modified = difference[1][n]
+
+#                 if 'fixture1' in metafunc.fixturenames:
+#                     metafunc.parametrize("fixture1", original)
+#                 if 'fixture2' in metafunc.fixturenames:
+#                     metafunc.parametrize("fixture2", modified)
+
+
+# @pytest.fixture()
+# def generate_tests(metafunc):
+
+#     mark_names = [ mark.name for mark in metafunc.function.pytestmark ]
+
+#     # Пропускаем все функции, у которых нет аргумента test_input
+#     if 'test_input' not in metafunc.fixturenames:
+#         return
+#     if 'yaml' not in mark_names:
+#     return
+    
+#     # connection to original database
+#     con_orig = sqlite3.connect(original_db)
+#     cur_orig = con_orig.cursor()
+  
+#     data_orig = cur_orig.execute("SELECT * FROM Ships").fetchall()
+#     # print("original", data_orig)
+
+#     # connection to temporary copy with changes
+#     con_temp = sqlite3.connect(copy_db)
+#     cur_temp = con_temp.cursor()
+
+#     data_copy = cur_temp.execute("SELECT * FROM Ships").fetchall()
+#     # print("copy:", data_copy)
+
+#     # create list with all differences between original and modified databases
+#     # differences is a list of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
+#     i = 0
+#     differences = []
+#     for row in data_orig:
+#         differences.append((data_orig[i], data_copy[i]))
+#         i += 1
+#     # print(differences)
+
+#     test_cases = differences
+
+#     if not test_cases:
+#         raise ValueError("Test cases not loaded")
+
+#     return metafunc.parametrize("test_input, expected_result", test_cases)
+
+@pytest.fixture()
+def what_changed_in_ships(copy_db, original_db):
+    """Checks if weapon or hull or engine was changed for each ship in table Ships"""
+    # connection to original database
+    con_orig = sqlite3.connect(original_db)
+    cur_orig = con_orig.cursor()
+
+    data_orig = cur_orig.execute("SELECT * FROM Ships").fetchall()
+    # print("original", data_orig)
+
+    # connection to temporary copy with changes
+    con_temp = sqlite3.connect(copy_db)
+    cur_temp = con_temp.cursor()
+
+    data_copy = cur_temp.execute("SELECT * FROM Ships").fetchall()
+    # print("copy:", data_copy)
+
+    # create list with all differences between original and modified databases
+    # differences is a list of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
+    i = 0
+    differences = []
+    for row in data_orig:
+        differences.append((data_orig[i], data_copy[i]))
+        i += 1
+    # print(differences)
+
+    for difference in differences:
+        # difference is tuple of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
+        print(difference)
+        # print('original', difference[0])
+        # print('copy', difference[1])
+        # compare each element of tuple to another element of tuple, in other words compare every property of ship from original db with every property of ship from temporary db
+        for n in range(0, len(differences[0][0])):
+            if difference[0][n] != difference[1][n]:
+                # Ship-x, property-y (data from temp db)
+                #   expected property-z (from original db), was property-y (from temp db)
+
+                # difference[0] - original, difference[1] - temporary
+                print(f"""{difference[1][0]}, {difference[1][n]}\n    expected {difference[0][n]}, was {difference[1][n]}""")
+                yield difference
