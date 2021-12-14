@@ -181,23 +181,23 @@ def pytest_generate_tests(metafunc):
     # differences is a list of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
     i = 0
     differences = []
-    for row in data_orig:
-        differences.append((data_orig[i], data_copy[i]))
-        i += 1
-    # print(differences)
-
-    for difference in differences:
-        # difference is tuple of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
-        print(difference)
-        # print('original', difference[0])
-        # print('copy', difference[1])
-        # compare each element of tuple to another element of tuple, in other words compare every property of ship from original db with every property of ship from temporary db
-        for n in range(0, len(differences[0][0])):
-            if difference[0][n] != difference[1][n]:
-                # Ship-x, property-y (data from temp db)
-                #   expected property-z (from original db), was property-y (from temp db)
-
-                # difference[0] - original, difference[1] - temporary
-                print(f"""{difference[1][0]}, {difference[1][n]}\n    expected {difference[0][n]}, was {difference[1][n]}""")
-                # yield difference
+    # for row in data_orig:
+    #     differences.append((data_orig[i], data_copy[i]))
+    #     i += 1
+    # # print(differences)
+    #
+    # for difference in differences:
+    #     # difference is tuple of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
+    #     print(difference)
+    #     # print('original', difference[0])
+    #     # print('copy', difference[1])
+    #     # compare each element of tuple to another element of tuple, in other words compare every property of ship from original db with every property of ship from temporary db
+    #     for n in range(0, len(differences[0][0])):
+    #         if difference[0][n] != difference[1][n]:
+    #             # Ship-x, property-y (data from temp db)
+    #             #   expected property-z (from original db), was property-y (from temp db)
+    #
+    #             # difference[0] - original, difference[1] - temporary
+    #             print(f"""{difference[1][0]}, {difference[1][n]}\n    expected {difference[0][n]}, was {difference[1][n]}""")
+    #             # yield difference
     metafunc.parametrize('orig, modif', differences)
