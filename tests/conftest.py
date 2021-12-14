@@ -2,44 +2,33 @@ import pytest
 import shutil
 import sqlite3
 
-from pathlib import Path
+from pathlib import Path, PurePath
 from random import randint
 
 
-@pytest.fixture(scope='session')
-def copy_db():
+# @pytest.fixture(scope='session')
+def pytest_generate_tests(metafunc):
+    #def copy_db():
     """returns path for copy of the database"""
     # looks for wargaming.db in parent directory of test_random_changes.py
     path = Path('.')
-    DATABASE_PATH = path / 'wargaming.db'
+    DATABASE_PATH_ORIG = path / 'wargaming.db'
     # makes copy of wargaming.db
     # db_copy_for_tst is a string - path to the file (?)
-    db_copy_for_tst = shutil.copyfile(DATABASE_PATH, 'tests\\db_copy_for_tst.db')
-    return db_copy_for_tst
+    db_copy_for_tst = shutil.copyfile(DATABASE_PATH_ORIG, 'tests\\db_copy_for_tst.db')
+
+    DATABASE_PATH_COPY = path / 'tests\\db_copy_for_tst.db'
 
 
-# I don't actually understand how 'autouse=True' works. But without it the function doesn't execute.
-@pytest.fixture()
-def original_db():
-    """returns path for original database"""
-    # looks for wargaming.db in parent directory of test_random_changes.py
-    path = Path('.')
-    DATABASE_PATH = path / 'wargaming.db'
-    # makes copy of wargaming.db
-    return DATABASE_PATH
-    
 
-# I don't actually understand how 'autouse=True' works. But without it the function doesn't execute.
-@pytest.fixture(autouse=True)
-def change_ships_properties(copy_db):
     """changes columns weapon, hull, engine in Ships table;
     takes the result of copy_db() and makes random changes in it
     'Для каждого корабля меняется на случайный один из компонентов: корпус, орудие или двигатель'
     """
     # print("\nMYDEBUG", copy_db)
     # print("\nMYDEBUG", type(copy_db))
-    con = sqlite3.connect(copy_db)
-    cur = con.cursor()
+    con_copy = sqlite3.connect(path / 'tests\\db_copy_for_tst.db')
+    cur_copy = con_copy.cursor()
 
     # list with each ship
     list_of_ships = []
@@ -74,33 +63,27 @@ def change_ships_properties(copy_db):
     # print("list_of_weapon_changes", list_of_weapon_changes)
     # print("list_of_hull_changes", list_of_hull_changes)
     # print("list_of_engine_changes",list_of_engine_changes)
-    
+
     # write changed weapon in Ships table
-    with con:
-        cur.executemany(f"UPDATE Ships SET weapon = ? WHERE ship = ?", list_of_weapon_changes)
+    with con_copy:
+        cur_copy.executemany(f"UPDATE Ships SET weapon = ? WHERE ship = ?", list_of_weapon_changes)
     # write changed hull in Ships table
-    with con:
-        cur.executemany(f"UPDATE Ships SET hull = ? WHERE ship = ?", list_of_hull_changes)
+    with con_copy:
+        cur_copy.executemany(f"UPDATE Ships SET hull = ? WHERE ship = ?", list_of_hull_changes)
     # write changed engine in Ships table
-    with con:
-        cur.executemany(f"UPDATE Ships SET engine = ? WHERE ship = ?", list_of_engine_changes)
+    with con_copy:
+        cur_copy.executemany(f"UPDATE Ships SET engine = ? WHERE ship = ?", list_of_engine_changes)
 
-
-# may be buggy; does it take the original copy or copy modified by test_change_ships_properties ???
-# I don't actually understand how 'autouse=True' works. But without it the function doesn't execute.
-@pytest.fixture(autouse=True)
-def change_weapons_hulls_engines_properties(copy_db):
+    # may be buggy; does it take the original copy or copy modified by test_change_ships_properties ???
     """takes the result of copy_db() and makes random change in random property for each row of tables Weapons, Hulls, Engines
-    'В каждом компоненте меняется один из случайно выбранных параметров на случайное значение из допустимого диапазона'
+        'В каждом компоненте меняется один из случайно выбранных параметров на случайное значение из допустимого диапазона'
     """
-    con = sqlite3.connect(copy_db)
-    cur = con.cursor()
-  
+
     # change columns in Weapons table
     print("\nchanging properties in Weapons table")
     # attmept to make code a little more flexible, without hardcoded number of rows
     # fetchall() returns a list of tuples, like [(15,)]
-    quantity_of_rows_weapons = cur.execute("SELECT COUNT(*) FROM Weapons").fetchall()[0][0]
+    quantity_of_rows_weapons = cur_copy.execute("SELECT COUNT(*) FROM Weapons").fetchall()[0][0]
 
     for i in range(1, quantity_of_rows_weapons + 1):
         # "weapon" is used as a pointer in table, to show cur.execute which row should be changed
@@ -109,30 +92,35 @@ def change_weapons_hulls_engines_properties(copy_db):
         n = randint(1, 6)
         if n == 1:
             print(f"\nn = {n}, changing reload_speed in Weapons table for {weapon}")
-            with con:
-                cur.execute("UPDATE Weapons SET reload_speed = :reload_speed WHERE weapon = :weapon", {"reload_speed" : randint(1, 20), "weapon" : weapon})
+            with con_copy:
+                cur_copy.execute("UPDATE Weapons SET reload_speed = :reload_speed WHERE weapon = :weapon",
+                            {"reload_speed": randint(1, 20), "weapon": weapon})
         elif n == 2:
             print(f"\nn = {n}, changing rotation_speed in Weapons table for {weapon}")
-            with con:
-                cur.execute("UPDATE Weapons SET rotation_speed = :rotation_speed WHERE weapon = :weapon", {"rotation_speed" : randint(1, 20), "weapon" : weapon})
+            with con_copy:
+                cur_copy.execute("UPDATE Weapons SET rotation_speed = :rotation_speed WHERE weapon = :weapon",
+                            {"rotation_speed": randint(1, 20), "weapon": weapon})
         elif n == 3:
             print(f"\nn = {n}, changing diameter in Weapons table for {weapon}")
-            with con:
-                cur.execute("UPDATE Weapons SET diameter = :diameter WHERE weapon = :weapon", {"diameter" : randint(1, 20), "weapon" : weapon})
+            with con_copy:
+                cur_copy.execute("UPDATE Weapons SET diameter = :diameter WHERE weapon = :weapon",
+                            {"diameter": randint(1, 20), "weapon": weapon})
         elif n == 4:
             print(f"\nn = {n}, changing power_volley in Weapons table for {weapon}")
-            with con:
-                cur.execute("UPDATE Weapons SET power_volley = :power_volley WHERE weapon = :weapon", {"power_volley" : randint(1, 20), "weapon" : weapon})
+            with con_copy:
+                cur_copy.execute("UPDATE Weapons SET power_volley = :power_volley WHERE weapon = :weapon",
+                            {"power_volley": randint(1, 20), "weapon": weapon})
         elif n == 5:
             print(f"\nn = {n}, changing count in Weapons table for {weapon}")
-            with con:
-                cur.execute("UPDATE Weapons SET count = :count WHERE weapon = :weapon", {"count" : randint(1, 20), "weapon" : weapon})
-    
+            with con_copy:
+                cur_copy.execute("UPDATE Weapons SET count = :count WHERE weapon = :weapon",
+                            {"count": randint(1, 20), "weapon": weapon})
+
     # change Hulls table
     print("\nchanging properties in Hulls table")
     # attmept to make code a little more flexible, without hardcoded number of rows
     # fetchall() returns a list of tuples, like [(15,)]
-    quantity_of_rows_hulls = cur.execute("SELECT COUNT(*) FROM Hulls").fetchall()[0][0]
+    quantity_of_rows_hulls = cur_copy.execute("SELECT COUNT(*) FROM Hulls").fetchall()[0][0]
 
     for i in range(1, quantity_of_rows_hulls + 1):
         # "hull" is used as a pointer in table, to show cur.execute which row should be changed
@@ -141,22 +129,25 @@ def change_weapons_hulls_engines_properties(copy_db):
         n = randint(1, 3)
         if n == 1:
             print(f"\nn = {n}, changing armor in Hulls table for {hull}")
-            with con:
-                cur.execute("UPDATE Hulls SET armor = :armor WHERE hull = :hull", {"armor" : randint(1, 20), "hull" : hull})
+            with con_copy:
+                cur_copy.execute("UPDATE Hulls SET armor = :armor WHERE hull = :hull",
+                            {"armor": randint(1, 20), "hull": hull})
         elif n == 2:
             print(f"\nn = {n}, changing type in Hulls table for {hull}")
-            with con:
-                cur.execute("UPDATE Hulls SET type = :type WHERE hull = :hull", {"type" : randint(1, 20), "hull" : hull})
+            with con_copy:
+                cur_copy.execute("UPDATE Hulls SET type = :type WHERE hull = :hull",
+                            {"type": randint(1, 20), "hull": hull})
         elif n == 3:
             print(f"\nn = {n}, changing capacity in Hulls table for {hull}")
-            with con:
-                cur.execute("UPDATE Hulls SET capacity = :capacity WHERE hull = :hull", {"capacity" : randint(1, 20), "hull" : hull})
-    
+            with con_copy:
+                cur_copy.execute("UPDATE Hulls SET capacity = :capacity WHERE hull = :hull",
+                            {"capacity": randint(1, 20), "hull": hull})
+
     # change Engines table
     print("\n changing properties in Engines table")
     # attmept to make code a little more flexible, without hardcoded number of rows
     # fetchall() returns a list of tuples, like [(15,)]
-    quantity_of_rows_engines = cur.execute("SELECT COUNT(*) FROM Engines").fetchall()[0][0]
+    quantity_of_rows_engines = cur_copy.execute("SELECT COUNT(*) FROM Engines").fetchall()[0][0]
 
     for i in range(1, quantity_of_rows_engines + 1):
         # "engine" is used as a pointer in table, to show cur.execute which row should be changed
@@ -165,128 +156,25 @@ def change_weapons_hulls_engines_properties(copy_db):
         n = randint(1, 2)
         if n == 1:
             print(f"\nn = {n}, changing power in Engines table for {engine}")
-            with con:
-                cur.execute("UPDATE Engines SET power = :power WHERE engine = :engine", {"power" : randint(1, 20), "engine" : engine})
+            with con_copy:
+                cur_copy.execute("UPDATE Engines SET power = :power WHERE engine = :engine",
+                            {"power": randint(1, 20), "engine": engine})
         elif n == 2:
             print(f"\nn = {n}, changing type in Engines table for {engine}")
-            with con:
-                cur.execute("UPDATE Engines SET type = :type WHERE engine = :engine", {"type" : randint(1, 20), "engine" : engine})
+            with con_copy:
+                cur_copy.execute("UPDATE Engines SET type = :type WHERE engine = :engine",
+                            {"type": randint(1, 20), "engine": engine})
 
 
-
-
-
-
-
-
-
-
-
-# def what_changed_in_ships(copy_db, original_db, metafunc):
-#     """Checks if weapon or hull or engine was changed for each ship in table Ships"""
-#     # connection to original database
-#     con_orig = sqlite3.connect(original_db)
-#     cur_orig = con_orig.cursor()
-
-#     data_orig = cur_orig.execute("SELECT * FROM Ships").fetchall()
-#     # print("original", data_orig)
-
-#     # connection to temporary copy with changes
-#     con_temp = sqlite3.connect(copy_db)
-#     cur_temp = con_temp.cursor()
-
-#     data_copy = cur_temp.execute("SELECT * FROM Ships").fetchall()
-#     # print("copy:", data_copy)
-
-#     # create list with all differences between original and modified databases
-#     # differences is a list of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
-#     i = 0
-#     differences = []
-#     for row in data_orig:
-#         differences.append((data_orig[i], data_copy[i]))
-#         i += 1
-#     # print(differences)
-
-#     for difference in differences:
-#         # difference is tuple of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
-#         print(difference)
-#         # print('original', difference[0])
-#         # print('copy', difference[1])
-#         # compare each element of tuple to another element of tuple, in other words compare every property of ship from original db with every property of ship from temporary db
-#         for n in range(0, len(differences[0][0])):
-#             if difference[0][n] != difference[1][n]:
-#                 # Ship-x, property-y (data from temp db)
-#                 #   expected property-z (from original db), was property-y (from temp db)
-
-#                 # difference[0] - original, difference[1] - temporary
-#                 print(f"""{difference[1][0]}, {difference[1][n]}\n    expected {difference[0][n]}, was {difference[1][n]}""")
-
-#                 # assert difference[0][n] == difference[1][n], f"{difference[1][0]}, {difference[1][n]}\n    expected {difference[0][n]}, was {difference[1][n]}"
-#                 original = difference[0][n]
-#                 modified = difference[1][n]
-
-#                 if 'fixture1' in metafunc.fixturenames:
-#                     metafunc.parametrize("fixture1", original)
-#                 if 'fixture2' in metafunc.fixturenames:
-#                     metafunc.parametrize("fixture2", modified)
-
-
-# @pytest.fixture()
-# def generate_tests(metafunc):
-
-#     mark_names = [ mark.name for mark in metafunc.function.pytestmark ]
-
-#     # Пропускаем все функции, у которых нет аргумента test_input
-#     if 'test_input' not in metafunc.fixturenames:
-#         return
-#     if 'yaml' not in mark_names:
-#     return
-    
-#     # connection to original database
-#     con_orig = sqlite3.connect(original_db)
-#     cur_orig = con_orig.cursor()
-  
-#     data_orig = cur_orig.execute("SELECT * FROM Ships").fetchall()
-#     # print("original", data_orig)
-
-#     # connection to temporary copy with changes
-#     con_temp = sqlite3.connect(copy_db)
-#     cur_temp = con_temp.cursor()
-
-#     data_copy = cur_temp.execute("SELECT * FROM Ships").fetchall()
-#     # print("copy:", data_copy)
-
-#     # create list with all differences between original and modified databases
-#     # differences is a list of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
-#     i = 0
-#     differences = []
-#     for row in data_orig:
-#         differences.append((data_orig[i], data_copy[i]))
-#         i += 1
-#     # print(differences)
-
-#     test_cases = differences
-
-#     if not test_cases:
-#         raise ValueError("Test cases not loaded")
-
-#     return metafunc.parametrize("test_input, expected_result", test_cases)
-
-@pytest.fixture()
-def what_changed_in_ships(copy_db, original_db):
     """Checks if weapon or hull or engine was changed for each ship in table Ships"""
     # connection to original database
-    con_orig = sqlite3.connect(original_db)
+    con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
     cur_orig = con_orig.cursor()
 
     data_orig = cur_orig.execute("SELECT * FROM Ships").fetchall()
     # print("original", data_orig)
 
-    # connection to temporary copy with changes
-    con_temp = sqlite3.connect(copy_db)
-    cur_temp = con_temp.cursor()
-
-    data_copy = cur_temp.execute("SELECT * FROM Ships").fetchall()
+    data_copy = cur_copy.execute("SELECT * FROM Ships").fetchall()
     # print("copy:", data_copy)
 
     # create list with all differences between original and modified databases
@@ -311,4 +199,5 @@ def what_changed_in_ships(copy_db, original_db):
 
                 # difference[0] - original, difference[1] - temporary
                 print(f"""{difference[1][0]}, {difference[1][n]}\n    expected {difference[0][n]}, was {difference[1][n]}""")
-                yield difference
+                # yield difference
+    metafunc.parametrize('orig, modif', differences)
