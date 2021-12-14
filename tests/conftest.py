@@ -118,7 +118,7 @@ def pytest_generate_tests(metafunc):
 
     # change Hulls table
     print("\nchanging properties in Hulls table")
-    # attmept to make code a little more flexible, without hardcoded number of rows
+    # attempt to make code a little more flexible, without hardcoded number of rows
     # fetchall() returns a list of tuples, like [(15,)]
     quantity_of_rows_hulls = cur_copy.execute("SELECT COUNT(*) FROM Hulls").fetchall()[0][0]
 
@@ -165,7 +165,6 @@ def pytest_generate_tests(metafunc):
                 cur_copy.execute("UPDATE Engines SET type = :type WHERE engine = :engine",
                             {"type": randint(1, 20), "engine": engine})
 
-
     """Checks if weapon or hull or engine was changed for each ship in table Ships"""
     # connection to original database
     con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
@@ -181,9 +180,9 @@ def pytest_generate_tests(metafunc):
     # differences is a list of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
     i = 0
     differences = []
-    # for row in data_orig:
-    #     differences.append((data_orig[i], data_copy[i]))
-    #     i += 1
+    for row in data_orig:
+        differences.append((data_orig[i], data_copy[i]))
+        i += 1
     # # print(differences)
     #
     # for difference in differences:
