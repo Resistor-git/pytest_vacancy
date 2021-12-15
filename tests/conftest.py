@@ -4,7 +4,9 @@ import sqlite3
 
 from pathlib import Path, PurePath
 from random import randint
-
+#####
+from test_random_changes import FailMsg
+#######
 
 # @pytest.fixture(scope='session')
 def pytest_generate_tests(metafunc):
@@ -200,3 +202,28 @@ def pytest_generate_tests(metafunc):
     #             print(f"""{difference[1][0]}, {difference[1][n]}\n    expected {difference[0][n]}, was {difference[1][n]}""")
     #             # yield difference
     metafunc.parametrize('orig, modif', differences)
+
+
+def pytest_assertrepr_compare(op, left, right):
+    """message for the failed test
+    example:
+    ship-200
+            expected: engine-2 was engine-16
+    """
+    if isinstance(left, FailMsg) and isinstance(right, FailMsg) and op == "==":
+        if left.val[1] != right.val[1]:
+            original_part = left.val[1]
+            different_part = right.val[1]
+        elif left.val[2] != right.val[2]:
+            original_part = left.val[2]
+            different_part = right.val[2]
+        elif left.val[3] != right.val[3]:
+            original_part = left.val[3]
+            different_part = right.val[3]
+        # comma at the end of list is intentional
+        return [
+            f"{left.val[0]}",
+            f"   expected: {original_part} was {different_part}",
+        ]
+
+
