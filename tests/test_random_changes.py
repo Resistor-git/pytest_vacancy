@@ -4,10 +4,6 @@ import pytest
 from random import randint
 
 
-# def test_ships(orig, modif):
-#     assert orig == modif
-
-
 # this class is here because I'm lazy (it should be in my_classes.py)
 class FailMsg:
     def __init__(self, val):

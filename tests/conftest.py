@@ -172,7 +172,7 @@ def pytest_sessionstart(session):
 
 
 def pytest_generate_tests(metafunc):
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!pytest_generate_tests started!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print("!!!!!!!!!!!!!!!!!!!!pytest_generate_tests started!!!!!!!!!!!!!!!!!!!!!", metafunc.function.__name__)
     """returns path for copy of the database"""
     # looks for wargaming.db in parent directory of test_random_changes.py
     path = Path('.')
@@ -187,18 +187,19 @@ def pytest_generate_tests(metafunc):
     con_copy = sqlite3.connect(path / 'tests\\db_copy_for_tst.db')
     cur_copy = con_copy.cursor()
 
+    # connection to original database
+    con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
+    cur_orig = con_orig.cursor()
+
     # generate data for "test_ships"
     if metafunc.function.__name__ == "test_ships":
         """Checks if weapon or hull or engine was changed for each ship in table Ships"""
-        # connection to original database
-        con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
-        cur_orig = con_orig.cursor()
+        # # connection to original database
+        # con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
+        # cur_orig = con_orig.cursor()
 
         data_orig = cur_orig.execute("SELECT * FROM Ships").fetchall()
-        # print("original", data_orig)
-
         data_copy = cur_copy.execute("SELECT * FROM Ships").fetchall()
-        # print("copy:", data_copy)
 
         # create list with all differences between original and modified databases
         # differences is a list of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
@@ -215,17 +216,29 @@ def pytest_generate_tests(metafunc):
     elif metafunc.function.__name__ == "test_ships_weapon":
         """Checks if any weapons property changed for each weapon in table Weapons"""
         # connection to original database
-        con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
-        cur_orig = con_orig.cursor()
+        # con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
+        # cur_orig = con_orig.cursor()
 
-        data_orig = cur_orig.execute("SELECT * FROM Weapons").fetchall()
-        # print("original", data_orig)
+        quantity_of_ships = cur_copy.execute("SELECT COUNT(*) FROM Ships").fetchall()[0][0]  # should be 200 by default
+        # data_orig - list of tuples [(weapon-2, 4, 19, 18, 16, 14), (weapon-5, 7, 11, 6, 16, 9)...] no ship names
+        data_orig = []
+        for ship in range(quantity_of_ships + 1):
+            print("ship:", ship)
+            print(f'ship+ship: ship-{ship}')
+            one_ship_weapon_data_orig = cur_orig.execute("""SELECT * FROM Weapons WHERE weapon IN
+                                                        (SELECT weapon FROM Ships WHERE ship = :ship)""", {"ship": f"ship-{ship}"}).fetchall()
+            # one_ship_weapon_data_orig.append(f'ship-{ship}')
+            data_orig.append(one_ship_weapon_data_orig)
+        print("!!!!data_orig!!!!!!", data_orig)
 
-        data_copy = cur_copy.execute("SELECT * FROM Weapons").fetchall()
-        # print("copy:", data_copy)
+        data_copy = []
+        for ship in range(quantity_of_ships + 1):
+            one_ship_weapon_data_copy = cur_copy.execute("SELECT * FROM Weapons WHERE weapon IN (SELECT weapon FROM Ships WHERE ship = :ship)", {"ship": f"ship-{ship}"}).fetchall()
+            data_copy.append(one_ship_weapon_data_copy)
+        print("!!!!data_copy!!!!", data_copy)
 
         # create list with all differences between original and modified databases
-        # differences is a list of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
+        # differences is a list of tuples; each tuple looks like ((weapon-2, 7, 9, 8, 6, 9), (weapon-2, 7, 9, 8, 6, 14))
         i = 0
         differences = []
         for row in data_orig:
@@ -238,8 +251,8 @@ def pytest_generate_tests(metafunc):
     elif metafunc.function.__name__ == "test_ships_hull":
         """Checks if any hulls property changed for each hull in table Hulls"""
         # connection to original database
-        con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
-        cur_orig = con_orig.cursor()
+        # con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
+        # cur_orig = con_orig.cursor()
 
         data_orig = cur_orig.execute("SELECT * FROM Hulls").fetchall()
         data_copy = cur_copy.execute("SELECT * FROM Hulls").fetchall()
@@ -258,8 +271,8 @@ def pytest_generate_tests(metafunc):
     elif metafunc.function.__name__ == "test_ships_engine":
         """Checks if any engines property changed for each engine in table Engines"""
         # connection to original database
-        con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
-        cur_orig = con_orig.cursor()
+        # con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
+        # cur_orig = con_orig.cursor()
 
         data_orig = cur_orig.execute("SELECT * FROM Engines").fetchall()
         data_copy = cur_copy.execute("SELECT * FROM Engines").fetchall()
@@ -283,7 +296,10 @@ def pytest_assertrepr_compare(op, left, right):
             expected: engine-2 was engine-16
     """
     if isinstance(left, FailMsg) and isinstance(right, FailMsg) and op == "==":
-        if left.val[1] != right.val[1]:
+        if left.val[0] != right.val[0]:
+            original_part = left.val[0]
+            different_part = right.val[0]
+        elif left.val[1] != right.val[1]:
             original_part = left.val[1]
             different_part = right.val[1]
         elif left.val[2] != right.val[2]:
