@@ -58,12 +58,12 @@ def pytest_sessionstart(session):
         elif random_number == 2:
             # change hull
             print(f"\nrandom_number = {random_number}, changing hull in Ships table for {ship}")
-            new_hull = "hull-" + str(randint(1, 20))
+            new_hull = "hull-" + str(randint(1, 5))
             list_of_hull_changes.append((new_hull, ship))
         elif random_number == 3:
             # change engine
             print(f"\nrandom_number = {random_number}, changing engine in Ships table for {ship}")
-            new_engine = "engine-" + str(randint(1, 20))
+            new_engine = "engine-" + str(randint(1, 6))
             list_of_engine_changes.append((new_engine, ship))
     # print("list_of_weapon_changes", list_of_weapon_changes)
     # print("list_of_hull_changes", list_of_hull_changes)
@@ -262,14 +262,17 @@ def pytest_generate_tests(metafunc):
             one_ship_hull_data_orig = cur_orig.execute("""SELECT * FROM Hulls WHERE hull IN
                                                         (SELECT hull FROM Ships WHERE ship = :ship)""", {"ship": f"ship-{num}"}).fetchall()
             data_orig.append(one_ship_hull_data_orig)
-        print("!!!!data_orig!!!!", data_orig)
+            # print(f"!!!one_ship_hull_data_orig: {one_ship_hull_data_orig}!!!!!")
+        # print("!!!!data_orig!!!!", data_orig)
 
         data_copy = []
         for num in range(1, quantity_of_ships + 1):
             one_ship_hull_data_copy = cur_copy.execute("""SELECT * FROM Hulls WHERE hull IN 
                                                         (SELECT hull FROM Ships WHERE ship = :ship)""", {"ship": f"ship-{num}"}).fetchall()
             data_copy.append(one_ship_hull_data_copy)
-        print("!!!!data_copy!!!!", data_copy)
+            # print(f"!!!num: {num}")
+            # print(f"!!!one_ship_hull_data_copy: {one_ship_hull_data_copy}!!!!!")
+        # print("!!!!data_copy!!!!", data_copy)
 
         # create list with all differences between original and modified databases
         # differences is a list of tuples; each tuple looks like ((hull-2, 7, 9, 8, 6, 9), (hull-2, 7, 9, 8, 6, 14))
@@ -277,7 +280,9 @@ def pytest_generate_tests(metafunc):
         differences = []
         for row in data_orig:
             differences.append((data_orig[i], data_copy[i]))
+            # print(f"!!!!data_orig[i]: {data_orig[i]}, data_copy[i]:{data_copy[i]}!!!!")
             i += 1
+        # print("!!!!!differences!!!!!!", differences)
         con_orig.close()
         con_copy.close()
         metafunc.parametrize('orig, modif', differences)
