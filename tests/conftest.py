@@ -96,27 +96,27 @@ def pytest_sessionstart(session):
             # max n = number of columns which can be changed (only one of them will be changed)
             n = randint(1, 6)
             if n == 1:
-                print(f"\nn = {n}, changing reload_speed in Weapons table for {weapon}")
+                # print(f"\nn = {n}, changing reload_speed in Weapons table for {weapon}")
                 with con_copy:
                     cur_copy.execute("UPDATE Weapons SET reload_speed = :reload_speed WHERE weapon = :weapon",
                                      {"reload_speed": randint(1, 20), "weapon": weapon})
             elif n == 2:
-                print(f"\nn = {n}, changing rotation_speed in Weapons table for {weapon}")
+                # print(f"\nn = {n}, changing rotation_speed in Weapons table for {weapon}")
                 with con_copy:
                     cur_copy.execute("UPDATE Weapons SET rotation_speed = :rotation_speed WHERE weapon = :weapon",
                                      {"rotation_speed": randint(1, 20), "weapon": weapon})
             elif n == 3:
-                print(f"\nn = {n}, changing diameter in Weapons table for {weapon}")
+                # print(f"\nn = {n}, changing diameter in Weapons table for {weapon}")
                 with con_copy:
                     cur_copy.execute("UPDATE Weapons SET diameter = :diameter WHERE weapon = :weapon",
                                      {"diameter": randint(1, 20), "weapon": weapon})
             elif n == 4:
-                print(f"\nn = {n}, changing power_volley in Weapons table for {weapon}")
+                # print(f"\nn = {n}, changing power_volley in Weapons table for {weapon}")
                 with con_copy:
                     cur_copy.execute("UPDATE Weapons SET power_volley = :power_volley WHERE weapon = :weapon",
                                      {"power_volley": randint(1, 20), "weapon": weapon})
             elif n == 5:
-                print(f"\nn = {n}, changing count in Weapons table for {weapon}")
+                # print(f"\nn = {n}, changing count in Weapons table for {weapon}")
                 with con_copy:
                     cur_copy.execute("UPDATE Weapons SET count = :count WHERE weapon = :weapon",
                                      {"count": randint(1, 20), "weapon": weapon})
@@ -133,17 +133,17 @@ def pytest_sessionstart(session):
             hull = "hull-" + str(i)
             n = randint(1, 3)
             if n == 1:
-                print(f"\nn = {n}, changing armor in Hulls table for {hull}")
+                # print(f"\nn = {n}, changing armor in Hulls table for {hull}")
                 with con_copy:
                     cur_copy.execute("UPDATE Hulls SET armor = :armor WHERE hull = :hull",
                                      {"armor": randint(1, 20), "hull": hull})
             elif n == 2:
-                print(f"\nn = {n}, changing type in Hulls table for {hull}")
+                # print(f"\nn = {n}, changing type in Hulls table for {hull}")
                 with con_copy:
                     cur_copy.execute("UPDATE Hulls SET type = :type WHERE hull = :hull",
                                      {"type": randint(1, 20), "hull": hull})
             elif n == 3:
-                print(f"\nn = {n}, changing capacity in Hulls table for {hull}")
+                # print(f"\nn = {n}, changing capacity in Hulls table for {hull}")
                 with con_copy:
                     cur_copy.execute("UPDATE Hulls SET capacity = :capacity WHERE hull = :hull",
                                      {"capacity": randint(1, 20), "hull": hull})
@@ -160,12 +160,12 @@ def pytest_sessionstart(session):
             engine = "engine-" + str(i)
             n = randint(1, 2)
             if n == 1:
-                print(f"\nn = {n}, changing power in Engines table for {engine}")
+                # print(f"\nn = {n}, changing power in Engines table for {engine}")
                 with con_copy:
                     cur_copy.execute("UPDATE Engines SET power = :power WHERE engine = :engine",
                                      {"power": randint(1, 20), "engine": engine})
             elif n == 2:
-                print(f"\nn = {n}, changing type in Engines table for {engine}")
+                # print(f"\nn = {n}, changing type in Engines table for {engine}")
                 with con_copy:
                     cur_copy.execute("UPDATE Engines SET type = :type WHERE engine = :engine",
                                      {"type": randint(1, 20), "engine": engine})
@@ -214,28 +214,29 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('orig, modif', differences)
     # generate data for test_ships_weapon
     elif metafunc.function.__name__ == "test_ships_weapon":
-        """Checks if any weapons property changed for each weapon in table Weapons"""
+        """Checks if any weapons property in table Weapons changed for weapon of each ship"""
         # connection to original database
         # con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
         # cur_orig = con_orig.cursor()
 
         quantity_of_ships = cur_copy.execute("SELECT COUNT(*) FROM Ships").fetchall()[0][0]  # should be 200 by default
-        # data_orig - list of tuples [(weapon-2, 4, 19, 18, 16, 14), (weapon-5, 7, 11, 6, 16, 9)...] no ship names
+        # data_orig - list of lists of tuples [[('weapon-11', 8, '11', 14, 18, 19)], [('weapon-8', 17, '20', 19, 9, 12)],...] no ship names
         data_orig = []
-        for ship in range(quantity_of_ships + 1):
-            print("ship:", ship)
-            print(f'ship+ship: ship-{ship}')
+        for num in range(1, quantity_of_ships + 1):
+            # print("ship:", num)
+            # print(f'ship+num: ship-{num}')
             one_ship_weapon_data_orig = cur_orig.execute("""SELECT * FROM Weapons WHERE weapon IN
-                                                        (SELECT weapon FROM Ships WHERE ship = :ship)""", {"ship": f"ship-{ship}"}).fetchall()
-            # one_ship_weapon_data_orig.append(f'ship-{ship}')
+                                                        (SELECT weapon FROM Ships WHERE ship = :ship)""", {"ship": f"ship-{num}"}).fetchall()
+            # one_ship_weapon_data_orig.append(f'ship-{num}')
             data_orig.append(one_ship_weapon_data_orig)
-        print("!!!!data_orig!!!!!!", data_orig)
+        # print("!!!!data_orig!!!!!!", data_orig)
 
         data_copy = []
-        for ship in range(quantity_of_ships + 1):
-            one_ship_weapon_data_copy = cur_copy.execute("SELECT * FROM Weapons WHERE weapon IN (SELECT weapon FROM Ships WHERE ship = :ship)", {"ship": f"ship-{ship}"}).fetchall()
+        for num in range(1, quantity_of_ships + 1):
+            one_ship_weapon_data_copy = cur_copy.execute("""SELECT * FROM Weapons WHERE weapon IN 
+                                                        (SELECT weapon FROM Ships WHERE ship = :ship)""", {"ship": f"ship-{num}"}).fetchall()
             data_copy.append(one_ship_weapon_data_copy)
-        print("!!!!data_copy!!!!", data_copy)
+        # print("!!!!data_copy!!!!", data_copy)
 
         # create list with all differences between original and modified databases
         # differences is a list of tuples; each tuple looks like ((weapon-2, 7, 9, 8, 6, 9), (weapon-2, 7, 9, 8, 6, 14))
@@ -249,16 +250,29 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('orig, modif', differences)
     # generate data for test_ships_hull
     elif metafunc.function.__name__ == "test_ships_hull":
-        """Checks if any hulls property changed for each hull in table Hulls"""
+        """Checks if any hulls property in table Hulls changed for hull of each ship"""
         # connection to original database
         # con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
         # cur_orig = con_orig.cursor()
 
-        data_orig = cur_orig.execute("SELECT * FROM Hulls").fetchall()
-        data_copy = cur_copy.execute("SELECT * FROM Hulls").fetchall()
+        quantity_of_ships = cur_copy.execute("SELECT COUNT(*) FROM Ships").fetchall()[0][0]  # should be 200 by default
+        # data_orig - list of lists of tuples [[('hull-5', 20, 8, 20)], [('hull-4', 9, 9, 11)],...] no ship names
+        data_orig = []
+        for num in range(1, quantity_of_ships + 1):
+            one_ship_hull_data_orig = cur_orig.execute("""SELECT * FROM Hulls WHERE hull IN
+                                                        (SELECT hull FROM Ships WHERE ship = :ship)""", {"ship": f"ship-{num}"}).fetchall()
+            data_orig.append(one_ship_hull_data_orig)
+        print("!!!!data_orig!!!!", data_orig)
+
+        data_copy = []
+        for num in range(1, quantity_of_ships + 1):
+            one_ship_hull_data_copy = cur_copy.execute("""SELECT * FROM Hulls WHERE hull IN 
+                                                        (SELECT hull FROM Ships WHERE ship = :ship)""", {"ship": f"ship-{num}"}).fetchall()
+            data_copy.append(one_ship_hull_data_copy)
+        print("!!!!data_copy!!!!", data_copy)
 
         # create list with all differences between original and modified databases
-        # differences is a list of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
+        # differences is a list of tuples; each tuple looks like ((hull-2, 7, 9, 8, 6, 9), (hull-2, 7, 9, 8, 6, 14))
         i = 0
         differences = []
         for row in data_orig:
