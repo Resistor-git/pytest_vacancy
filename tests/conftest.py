@@ -185,10 +185,12 @@ def pytest_generate_tests(metafunc):
     # print("\nMYDEBUG", copy_db)
     # print("\nMYDEBUG", type(copy_db))
     con_copy = sqlite3.connect(path / 'tests\\db_copy_for_tst.db')
+    con_copy.row_factory = sqlite3.Row
     cur_copy = con_copy.cursor()
 
     # connection to original database
     con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
+    con_orig.row_factory = sqlite3.Row
     cur_orig = con_orig.cursor()
 
     # generate data for "test_ships"
@@ -216,12 +218,11 @@ def pytest_generate_tests(metafunc):
     # generate data for test_ships_weapon
     elif metafunc.function.__name__ == "test_ships_weapon":
         """Checks if any weapons property in table Weapons changed for weapon of each ship"""
-        # connection to original database
-        # con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
-        # cur_orig = con_orig.cursor()
 
         quantity_of_ships = cur_copy.execute("SELECT COUNT(*) FROM Ships").fetchall()[0][0]  # should be 200 by default
-        # data_orig - list of lists of tuples [[('weapon-11', 8, '11', 14, 18, 19)], [('weapon-8', 17, '20', 19, 9, 12)],...] no ship names
+        # data_orig - list of special sqlite objects which can be converted to dictionaries like
+        # {'weapon': 'weapon-19', 'reload_speed': 11, 'rotation_speed': '16', 'diameter': 15, 'power_volley': 7, 'count': 11};
+        # no ship names
         data_orig = []
         for num in range(1, quantity_of_ships + 1):
             # print("ship:", num)
@@ -230,7 +231,9 @@ def pytest_generate_tests(metafunc):
                                                         (SELECT weapon FROM Ships WHERE ship = :ship)""", {"ship": f"ship-{num}"}).fetchall()
             # one_ship_weapon_data_orig.append(f'ship-{num}')
             data_orig.append(one_ship_weapon_data_orig)
-        print("!!!!data_orig!!!!!!", data_orig)
+        # for lst in data_orig:
+        #     for tpl in lst:
+        #         print("!!!!data_orig!!!!!!", dict(tpl))
 
         data_copy = []
         for num in range(1, quantity_of_ships + 1):
@@ -240,18 +243,24 @@ def pytest_generate_tests(metafunc):
         # print("!!!!data_copy!!!!", data_copy)
 
         # create list with all differences between original and modified databases
-        # differences is a list of tuples; each tuple looks like ((weapon-2, 7, 9, 8, 6, 9), (weapon-2, 7, 9, 8, 6, 14))
+        # differences is a list of <sqlite3.Row objects; each can be converted to dict like
+        # {'weapon': 'weapon-1', 'reload_speed': 15, 'rotation_speed': '18', 'diameter': 15, 'power_volley': 3, 'count': 6}
         i = 0
         differences = []
         for row in data_orig:
-            differences.append((data_orig[i][0], data_copy[i][0]))
+            # here row is a list: [<sqlite3.Row object at 0x0000026BF0280550>]; row[0]['key'] - weapon property
+            # print(row[0]['diameter'])
+            # print('data_orig[i][0]:', data_orig[i][0], 'data_orig[i]:', data_orig[i])
+            # print('data_orig[i][0]:', dict(data_orig[i][0]))
+            differences.append((data_orig[i][0], data_copy[i][0]))  # (data_orig[i], data_copy[i]) gives the same result
             i += 1
-        print("!!!!differences!!!!", differences)
+        # print("!!!!differences!!!!", differences)
+
         con_orig.close()
         con_copy.close()
         metafunc.parametrize('orig, modif', differences)
-    # generate data for test_ships_hull
 
+    # generate data for test_ships_hull
     elif metafunc.function.__name__ == "test_ships_hull":
         """Checks if any hulls property in table Hulls changed for hull of each ship"""
         # connection to original database
@@ -303,26 +312,35 @@ def pytest_generate_tests(metafunc):
         for num in range(1, quantity_of_ships + 1):
             one_ship_engine_data_orig = cur_orig.execute("""SELECT * FROM Engines WHERE engine IN
                                                         (SELECT engine FROM Ships WHERE ship = :ship)""", {"ship": f"ship-{num}"}).fetchall()
-            data_orig.append(one_ship_engine_data_orig)
+            for foo in one_ship_engine_data_orig:
+                # print(dict(foo))
+                dct_foo = dict(foo)
+                dct_foo['ship'] = 'ship-' + str(num)
+                data_orig.append(dct_foo)
             # print(f"!!!one_ship_engine_data_orig: {one_ship_engine_data_orig}!!!!!")
-        # print("!!!!data_orig!!!!", data_orig)
+        print("!!!!data_orig!!!!", data_orig)
 
         data_copy = []
         for num in range(1, quantity_of_ships + 1):
             one_ship_engine_data_copy = cur_copy.execute("""SELECT * FROM Engines WHERE engine IN 
                                                         (SELECT engine FROM Ships WHERE ship = :ship)""", {"ship": f"ship-{num}"}).fetchall()
-            data_copy.append(one_ship_engine_data_copy)
+            for foo in one_ship_engine_data_copy:
+                # print(dict(foo))
+                dct_foo = dict(foo)
+                dct_foo['ship'] = 'ship-' + str(num)
+                data_copy.append(dct_foo)
             # print(f"!!!num: {num}")
             # print(f"!!!one_ship_engine_data_copy: {one_ship_engine_data_copy}!!!!!")
-        # print("!!!!data_copy!!!!", data_copy)
+        print("!!!!data_copy!!!!", data_copy)
 
         # create list with all differences between original and modified databases
-        # differences is a list of tuples; each tuple looks like ((engine-2, 7, 9, 8, 6, 9), (engine-2, 7, 9, 8, 6, 14))
+        # differences is a list of tuples; each tuple looks like
+        # (<sqlite3.Row object at 0x000002593E555250>, <sqlite3.Row object at 0x000002593E59DED0>)
         i = 0
         differences = []
         for row in data_orig:
-            differences.append((data_orig[i][0], data_copy[i][0]))
-            # print(f"!!!!data_orig[i]: {data_orig[i]}, data_copy[i]:{data_copy[i]}!!!!")
+            differences.append((data_orig[i], data_copy[i]))
+            # print(f"!!!!data_orig[i]: {data_orig[i][0]}, data_copy[i]:{data_copy[i][0]}!!!!")
             i += 1
         # print("!!!!!differences!!!!!!", differences)
         con_orig.close()
@@ -337,28 +355,57 @@ def pytest_assertrepr_compare(op, left, right):
             expected: engine-2 was engine-16
     """
     if isinstance(left, FailMsg) and isinstance(right, FailMsg) and op == "==":
-        # даёт интересны эффект: если поменялось оружие, корпус или двигатель, но оно сразу говорит:
+        # даёт интересный эффект: если поменялось оружие, корпус или двигатель, но оно сразу говорит:
         # 'поменялось то-то', а про параметры ни слова - может заменить test_ships
-        if left.val[0] != right.val[0]:
-            original_part = left.val[0]
-            different_part = right.val[0]
-        elif left.val[1] != right.val[1]:
-            original_part = left.val[1]
-            different_part = right.val[1]
-        elif left.val[2] != right.val[2]:
-            original_part = left.val[2]
-            different_part = right.val[2]
-        elif left.val[3] != right.val[3]:
-            original_part = left.val[3]
-            different_part = right.val[3]
-        elif left.val[4] != right.val[4]:
-            original_part = left.val[4]
-            different_part = right.val[4]
-        elif left.val[5] != right.val[5]:
-            original_part = left.val[5]
-            different_part = right.val[5]
-        # comma at the end of list is intentional
-        return [
-            f"{left.val[0]}",
-            f"   expected: {original_part} was {different_part}",
-        ]
+        # [0] gives returns 'ship-x' or 'weapon-x' or 'hull-x' or 'engine-x'
+        try:
+            if left.val[0] != right.val[0]:
+                original_part = left.val[0]
+                different_part = right.val[0]
+            elif left.val[1] != right.val[1]:
+                original_part = left.val[1]
+                different_part = right.val[1]
+            elif left.val[2] != right.val[2]:
+                original_part = left.val[2]
+                different_part = right.val[2]
+            elif left.val[3] != right.val[3]:
+                original_part = left.val[3]
+                different_part = right.val[3]
+            elif left.val[4] != right.val[4]:
+                original_part = left.val[4]
+                different_part = right.val[4]
+            elif left.val[5] != right.val[5]:
+                original_part = left.val[5]
+                different_part = right.val[5]
+            # comma at the end of list is intentional
+            return [
+                f"{left.val[0]}, {different_part}",
+                f"   expected: {original_part} was {different_part}",
+            ]
+        # цэ костыль
+        except KeyError:
+            # if only one property of engine changed (but name is the same)
+            if left.val['engine'] == right.val['engine']:
+                if left.val['power'] != right.val['power']:
+                    original_part = left.val['power']
+                    different_part = right.val['power']
+                    attribute = 'power'
+                elif left.val['type'] != right.val['type']:
+                    original_part = left.val['type']
+                    different_part = right.val['type']
+                    attribute = 'type'
+                # comma at the end of list is intentional
+                return [
+                    f"{left.val['ship']}, {left.val['engine']}",
+                    f" {attribute} expected: {original_part} was {different_part}",
+                ]
+            # if whole engine changed (engine-2 to engine-5)
+            elif left.val['engine'] != right.val['engine']:
+                original_part = left.val['engine']
+                different_part = right.val['engine']
+                attribute = 'engine'
+                # comma at the end of list is intentional
+                return [
+                    f"{left.val['ship']}, {different_part}",
+                    f"   expected: {original_part} was {different_part}",
+                ]
