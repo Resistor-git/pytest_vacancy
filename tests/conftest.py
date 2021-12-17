@@ -212,6 +212,7 @@ def pytest_generate_tests(metafunc):
         con_orig.close()
         con_copy.close()
         metafunc.parametrize('orig, modif', differences)
+
     # generate data for test_ships_weapon
     elif metafunc.function.__name__ == "test_ships_weapon":
         """Checks if any weapons property in table Weapons changed for weapon of each ship"""
@@ -229,7 +230,7 @@ def pytest_generate_tests(metafunc):
                                                         (SELECT weapon FROM Ships WHERE ship = :ship)""", {"ship": f"ship-{num}"}).fetchall()
             # one_ship_weapon_data_orig.append(f'ship-{num}')
             data_orig.append(one_ship_weapon_data_orig)
-        # print("!!!!data_orig!!!!!!", data_orig)
+        print("!!!!data_orig!!!!!!", data_orig)
 
         data_copy = []
         for num in range(1, quantity_of_ships + 1):
@@ -243,12 +244,14 @@ def pytest_generate_tests(metafunc):
         i = 0
         differences = []
         for row in data_orig:
-            differences.append((data_orig[i], data_copy[i]))
+            differences.append((data_orig[i][0], data_copy[i][0]))
             i += 1
+        print("!!!!differences!!!!", differences)
         con_orig.close()
         con_copy.close()
         metafunc.parametrize('orig, modif', differences)
     # generate data for test_ships_hull
+
     elif metafunc.function.__name__ == "test_ships_hull":
         """Checks if any hulls property in table Hulls changed for hull of each ship"""
         # connection to original database
@@ -279,30 +282,49 @@ def pytest_generate_tests(metafunc):
         i = 0
         differences = []
         for row in data_orig:
-            differences.append((data_orig[i], data_copy[i]))
+            differences.append((data_orig[i][0], data_copy[i][0]))
             # print(f"!!!!data_orig[i]: {data_orig[i]}, data_copy[i]:{data_copy[i]}!!!!")
             i += 1
         # print("!!!!!differences!!!!!!", differences)
         con_orig.close()
         con_copy.close()
         metafunc.parametrize('orig, modif', differences)
+
     # generate data for test_ships_engine
     elif metafunc.function.__name__ == "test_ships_engine":
-        """Checks if any engines property changed for each engine in table Engines"""
+        """Checks if any engines property in table Engines changed for engine of each ship"""
         # connection to original database
         # con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
         # cur_orig = con_orig.cursor()
 
-        data_orig = cur_orig.execute("SELECT * FROM Engines").fetchall()
-        data_copy = cur_copy.execute("SELECT * FROM Engines").fetchall()
+        quantity_of_ships = cur_copy.execute("SELECT COUNT(*) FROM Ships").fetchall()[0][0]  # should be 200 by default
+        # data_orig - list of lists of tuples [[('engine-5', 20, 8, 20)], [('engine-4', 9, 9, 11)],...] no ship names
+        data_orig = []
+        for num in range(1, quantity_of_ships + 1):
+            one_ship_engine_data_orig = cur_orig.execute("""SELECT * FROM Engines WHERE engine IN
+                                                        (SELECT engine FROM Ships WHERE ship = :ship)""", {"ship": f"ship-{num}"}).fetchall()
+            data_orig.append(one_ship_engine_data_orig)
+            # print(f"!!!one_ship_engine_data_orig: {one_ship_engine_data_orig}!!!!!")
+        # print("!!!!data_orig!!!!", data_orig)
+
+        data_copy = []
+        for num in range(1, quantity_of_ships + 1):
+            one_ship_engine_data_copy = cur_copy.execute("""SELECT * FROM Engines WHERE engine IN 
+                                                        (SELECT engine FROM Ships WHERE ship = :ship)""", {"ship": f"ship-{num}"}).fetchall()
+            data_copy.append(one_ship_engine_data_copy)
+            # print(f"!!!num: {num}")
+            # print(f"!!!one_ship_engine_data_copy: {one_ship_engine_data_copy}!!!!!")
+        # print("!!!!data_copy!!!!", data_copy)
 
         # create list with all differences between original and modified databases
-        # differences is a list of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
+        # differences is a list of tuples; each tuple looks like ((engine-2, 7, 9, 8, 6, 9), (engine-2, 7, 9, 8, 6, 14))
         i = 0
         differences = []
         for row in data_orig:
-            differences.append((data_orig[i], data_copy[i]))
+            differences.append((data_orig[i][0], data_copy[i][0]))
+            # print(f"!!!!data_orig[i]: {data_orig[i]}, data_copy[i]:{data_copy[i]}!!!!")
             i += 1
+        # print("!!!!!differences!!!!!!", differences)
         con_orig.close()
         con_copy.close()
         metafunc.parametrize('orig, modif', differences)
@@ -315,6 +337,8 @@ def pytest_assertrepr_compare(op, left, right):
             expected: engine-2 was engine-16
     """
     if isinstance(left, FailMsg) and isinstance(right, FailMsg) and op == "==":
+        # даёт интересны эффект: если поменялось оружие, корпус или двигатель, но оно сразу говорит:
+        # 'поменялось то-то', а про параметры ни слова - может заменить test_ships
         if left.val[0] != right.val[0]:
             original_part = left.val[0]
             different_part = right.val[0]
