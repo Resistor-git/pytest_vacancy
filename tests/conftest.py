@@ -193,30 +193,8 @@ def pytest_generate_tests(metafunc):
     con_orig.row_factory = sqlite3.Row
     cur_orig = con_orig.cursor()
 
-    # generate data for "test_ships"
-    if metafunc.function.__name__ == "test_ships":
-        """Checks if weapon or hull or engine was changed for each ship in table Ships"""
-        # # connection to original database
-        # con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
-        # cur_orig = con_orig.cursor()
-
-        data_orig = cur_orig.execute("SELECT * FROM Ships").fetchall()
-        data_copy = cur_copy.execute("SELECT * FROM Ships").fetchall()
-
-        # create list with all differences between original and modified databases
-        # differences is a list of tuples; each tuple looks like (('ship-200', 'weapon-20', 'hull-3', 'engine-6'), ('ship-200', 'weapon-20', 'hull-3', 'engine-7'))
-        i = 0
-        differences = []
-        for row in data_orig:
-            differences.append((data_orig[i], data_copy[i]))
-            i += 1
-
-        con_orig.close()
-        con_copy.close()
-        metafunc.parametrize('orig, modif', differences)
-
     # generate data for test_ships_weapon
-    elif metafunc.function.__name__ == "test_ships_weapon":
+    if metafunc.function.__name__ == "test_ships_weapon":
         """Checks if any weapons property in table Weapons changed for weapon of each ship"""
         quantity_of_ships = cur_copy.execute("SELECT COUNT(*) FROM Ships").fetchall()[0][0]  # should be 200 by default
         # data_orig - list of dictionaries, example:

@@ -13,14 +13,6 @@ class FailMsg:
         return self.val == other.val
 
 
-def test_ships(orig, modif):
-    """compares rows from original database (wargaming.db) with rows from modified temporary copy of database (db_copy_for_tst.db)
-    compares data from table 'Ships' """
-    original_ship = FailMsg(orig)
-    modified_ship = FailMsg(modif)
-    assert original_ship == modified_ship
-
-
 def test_ships_weapon(orig, modif):
     """compares rows from original database (wargaming.db) with rows from modified temporary copy of database (db_copy_for_tst.db)
     compares data from table 'Weapons' """
