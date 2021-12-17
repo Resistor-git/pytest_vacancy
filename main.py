@@ -3,8 +3,8 @@ from random import randint
 from my_classes import Ship, Weapon, Hull, Engine
 
 con = sqlite3.connect('wargaming.db')
-# con = sqlite3.connect(":memory:")
 cur = con.cursor()
+
 
 def create_db():
     """create database with 4 tables: Ships, Weapons, Hulls, Engines
@@ -132,6 +132,3 @@ insert_hulls()
 insert_engines()
 
 con.close()
-
-# https://www.youtube.com/watch?v=aJVvffGlwQU&list=PLJsmaNFr5mNqSeuNepT3IaMrgzRMm9lQR&index=1
-# https://code.visualstudio.com/docs/python/testing

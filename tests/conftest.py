@@ -3,6 +3,7 @@ import pytest
 import shutil
 import sqlite3
 
+
 from pathlib import Path
 from random import randint
 from test_random_changes import FailMsg
@@ -16,22 +17,18 @@ def pytest_sessionstart(session):
     appendix: this is not how task asked to do this, task asks to use @pytest.fixture(scope="session"), but in my case
     it doesn't work (can't call creation of db_copy_for_tst.db before pytest_generate_tests and can't call it inside
     because it either creates db_copy_for_tst.db several times or just tells that you can't call fixture this way"""
-    print("""!!!!!!!!!!!!!!!!!!!!!!create_db_copy_for_tst started!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!""")
     # returns path for copy of the database
     # looks for wargaming.db in parent directory of test_random_changes.py
     path = Path('.')
     DATABASE_PATH_ORIG = path / 'wargaming.db'
     # makes copy of wargaming.db
-    # db_copy_for_tst is a string - path to the file (?)
+    # db_copy_for_tst is a string (?) - path to the file
     db_copy_for_tst = shutil.copyfile(DATABASE_PATH_ORIG, 'tests\\db_copy_for_tst.db')
 
-    """changes columns weapon, hull, engine in Ships table;
-    takes the result of copy_db() and makes random changes in it
-    'Для каждого корабля меняется на случайный один из компонентов: корпус, орудие или двигатель'
-    """
+    # changes columns weapon, hull, engine in Ships table;
+    # takes the result of copy_db() and makes random changes in it
+    # 'Для каждого корабля меняется на случайный один из компонентов: корпус, орудие или двигатель'
+
     con_copy = sqlite3.connect(path / 'tests\\db_copy_for_tst.db')
     cur_copy = con_copy.cursor()
 
@@ -42,7 +39,8 @@ def pytest_sessionstart(session):
         # print(ship)
         list_of_ships.append(ship)
 
-    # each list contains ships with changed properties, one list per property [('weapon-19', 'ship-1'), ('weapon-5', 'ship-22', )...]; [('hull-3', 'ship-4'), ('hull-5', 'ship-7', )...]
+    # each list contains ships with changed properties,
+    # one list per property [('weapon-19', 'ship-1'), ('weapon-5', 'ship-22', )...]; [('hull-3', 'ship-4'), ('hull-5', 'ship-7', )...]
     list_of_weapon_changes = []
     list_of_hull_changes = []
     list_of_engine_changes = []
@@ -52,22 +50,19 @@ def pytest_sessionstart(session):
         random_number = randint(1, 3)
         if random_number == 1:
             # change weapon
-            print(f"\nrandom_number = {random_number}, changing weapon in Ships table for {ship}")
+            # print(f"\nrandom_number = {random_number}, changing weapon in Ships table for {ship}")
             new_weapon = "weapon-" + str(randint(1, 20))
             list_of_weapon_changes.append((new_weapon, ship))
         elif random_number == 2:
             # change hull
-            print(f"\nrandom_number = {random_number}, changing hull in Ships table for {ship}")
+            # print(f"\nrandom_number = {random_number}, changing hull in Ships table for {ship}")
             new_hull = "hull-" + str(randint(1, 5))
             list_of_hull_changes.append((new_hull, ship))
         elif random_number == 3:
             # change engine
-            print(f"\nrandom_number = {random_number}, changing engine in Ships table for {ship}")
+            # print(f"\nrandom_number = {random_number}, changing engine in Ships table for {ship}")
             new_engine = "engine-" + str(randint(1, 6))
             list_of_engine_changes.append((new_engine, ship))
-    # print("list_of_weapon_changes", list_of_weapon_changes)
-    # print("list_of_hull_changes", list_of_hull_changes)
-    # print("list_of_engine_changes",list_of_engine_changes)
 
     # write changed weapon in Ships table
     with con_copy:
@@ -79,13 +74,11 @@ def pytest_sessionstart(session):
     with con_copy:
         cur_copy.executemany(f"UPDATE Ships SET engine = ? WHERE ship = ?", list_of_engine_changes)
 
-        # may be buggy; does it take the original copy or copy modified by test_change_ships_properties ???
-        """takes the result of copy_db() and makes random change in random property for each row of tables Weapons, Hulls, Engines
-            'В каждом компоненте меняется один из случайно выбранных параметров на случайное значение из допустимого диапазона'
-        """
+        # takes the result of copy_db() and makes random change in random property for each row of tables Weapons, Hulls, Engines
+        # 'В каждом компоненте меняется один из случайно выбранных параметров на случайное значение из допустимого диапазона'
 
         # change columns in Weapons table
-        print("\nchanging properties in Weapons table")
+        # print("\nchanging properties in Weapons table")
         # attmept to make code a little more flexible, without hardcoded number of rows
         # fetchall() returns a list of tuples, like [(15,)]
         quantity_of_rows_weapons = cur_copy.execute("SELECT COUNT(*) FROM Weapons").fetchall()[0][0]
@@ -122,7 +115,7 @@ def pytest_sessionstart(session):
                                      {"count": randint(1, 20), "weapon": weapon})
 
         # change Hulls table
-        print("\nchanging properties in Hulls table")
+        # print("\nchanging properties in Hulls table")
         # attempt to make code a little more flexible, without hardcoded number of rows
         # fetchall() returns a list of tuples, like [(15,)]
         quantity_of_rows_hulls = cur_copy.execute("SELECT COUNT(*) FROM Hulls").fetchall()[0][0]
@@ -149,8 +142,8 @@ def pytest_sessionstart(session):
                                      {"capacity": randint(1, 20), "hull": hull})
 
         # change Engines table
-        print("\n changing properties in Engines table")
-        # attmept to make code a little more flexible, without hardcoded number of rows
+        # print("\n changing properties in Engines table")
+        # attempt to make code a little more flexible, without hardcoded number of rows
         # fetchall() returns a list of tuples, like [(15,)]
         quantity_of_rows_engines = cur_copy.execute("SELECT COUNT(*) FROM Engines").fetchall()[0][0]
 
@@ -178,12 +171,10 @@ def pytest_generate_tests(metafunc):
     path = Path('.')
     DATABASE_PATH_ORIG = path / 'wargaming.db'
 
-    """changes columns weapon, hull, engine in Ships table;
-    takes the result of copy_db() and makes random changes in it
-    'Для каждого корабля меняется на случайный один из компонентов: корпус, орудие или двигатель'
-    """
-    # print("\nMYDEBUG", copy_db)
-    # print("\nMYDEBUG", type(copy_db))
+    # changes columns weapon, hull, engine in Ships table;
+    # takes the result of copy_db() and makes random changes in it
+    # 'Для каждого корабля меняется на случайный один из компонентов: корпус, орудие или двигатель'
+
     con_copy = sqlite3.connect(path / 'tests\\db_copy_for_tst.db')
     con_copy.row_factory = sqlite3.Row
     cur_copy = con_copy.cursor()
@@ -208,8 +199,6 @@ def pytest_generate_tests(metafunc):
                 dct_foo = dict(foo)
                 dct_foo['ship'] = 'ship-' + str(num)
                 data_orig.append(dct_foo)
-            # print(f"!!!one_ship_hull_data_orig: {one_hull_engine_data_orig}!!!!!")
-        # print("!!!!data_orig!!!!", data_orig)
 
         data_copy = []
         for num in range(1, quantity_of_ships + 1):
@@ -220,7 +209,6 @@ def pytest_generate_tests(metafunc):
                 dct_foo = dict(foo)
                 dct_foo['ship'] = 'ship-' + str(num)
                 data_copy.append(dct_foo)
-        # print("!!!!data_copy!!!!", data_copy)
 
         # create list with all differences between original and modified databases
         # differences is a list of tuples with dictionaries; each tuple looks like
@@ -229,9 +217,7 @@ def pytest_generate_tests(metafunc):
         differences = []
         for row in data_orig:
             differences.append((data_orig[i], data_copy[i]))
-            # print(f"!!!!data_orig[i]: {data_orig[i][0]}, data_copy[i]:{data_copy[i][0]}!!!!")
             i += 1
-        # print("!!!!!differences!!!!!!", differences)
         con_orig.close()
         con_copy.close()
         metafunc.parametrize('orig, modif', differences)
@@ -251,8 +237,6 @@ def pytest_generate_tests(metafunc):
                 dct_foo = dict(foo)
                 dct_foo['ship'] = 'ship-' + str(num)
                 data_orig.append(dct_foo)
-            # print(f"!!!one_ship_hull_data_orig: {one_hull_engine_data_orig}!!!!!")
-        # print("!!!!data_orig!!!!", data_orig)
 
         data_copy = []
         for num in range(1, quantity_of_ships + 1):
@@ -263,7 +247,6 @@ def pytest_generate_tests(metafunc):
                 dct_foo = dict(foo)
                 dct_foo['ship'] = 'ship-' + str(num)
                 data_copy.append(dct_foo)
-        # print("!!!!data_copy!!!!", data_copy)
 
         # create list with all differences between original and modified databases
         # differences is a list of tuples with dictionaries; each tuple looks like
@@ -272,9 +255,8 @@ def pytest_generate_tests(metafunc):
         differences = []
         for row in data_orig:
             differences.append((data_orig[i], data_copy[i]))
-            # print(f"!!!!data_orig[i]: {data_orig[i][0]}, data_copy[i]:{data_copy[i][0]}!!!!")
             i += 1
-        # print("!!!!!differences!!!!!!", differences)
+
         con_orig.close()
         con_copy.close()
         metafunc.parametrize('orig, modif', differences)
@@ -283,8 +265,6 @@ def pytest_generate_tests(metafunc):
     elif metafunc.function.__name__ == "test_ships_engine":
         """Checks if any engines property in table Engines changed for engine of each ship"""
         # connection to original database
-        # con_orig = sqlite3.connect(DATABASE_PATH_ORIG)
-        # cur_orig = con_orig.cursor()
 
         quantity_of_ships = cur_copy.execute("SELECT COUNT(*) FROM Ships").fetchall()[0][0]  # should be 200 by default
         # data_orig - list of dictionaries, example
@@ -298,8 +278,6 @@ def pytest_generate_tests(metafunc):
                 dct_foo = dict(foo)
                 dct_foo['ship'] = 'ship-' + str(num)
                 data_orig.append(dct_foo)
-            # print(f"!!!one_ship_engine_data_orig: {one_ship_engine_data_orig}!!!!!")
-        print("!!!!data_orig!!!!", data_orig)
 
         data_copy = []
         for num in range(1, quantity_of_ships + 1):
@@ -310,7 +288,6 @@ def pytest_generate_tests(metafunc):
                 dct_foo = dict(foo)
                 dct_foo['ship'] = 'ship-' + str(num)
                 data_copy.append(dct_foo)
-        print("!!!!data_copy!!!!", data_copy)
 
         # create list with all differences between original and modified databases
         # differences is a list of tuples with dictionaries; each tuple looks like
@@ -319,9 +296,8 @@ def pytest_generate_tests(metafunc):
         differences = []
         for row in data_orig:
             differences.append((data_orig[i], data_copy[i]))
-            # print(f"!!!!data_orig[i]: {data_orig[i][0]}, data_copy[i]:{data_copy[i][0]}!!!!")
             i += 1
-        print("!!!!!differences!!!!!!", differences)
+
         con_orig.close()
         con_copy.close()
         metafunc.parametrize('orig, modif', differences)
@@ -331,7 +307,7 @@ def pytest_assertrepr_compare(op, left, right):
     """message for the failed test
     example:
     ship-200
-            expected: engine-2 was engine-16
+        expected: engine-2 was engine-16
     """
     if isinstance(left, FailMsg) and isinstance(right, FailMsg) and op == "==":
         try:
@@ -428,3 +404,9 @@ def pytest_assertrepr_compare(op, left, right):
                         f"{left.val['ship']}, {different_part}",
                         f"expected: {original_part}, was {different_part}",
                     ]
+
+
+# def pytest_sessionfinish(session):
+#     """removes modified database"""
+#     path = Path.cwd()
+#     path.unlink(path / 'tests\\db_copy_for_tst.db')
