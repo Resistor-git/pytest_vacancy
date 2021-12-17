@@ -43,7 +43,8 @@ def create_db():
                         type INT
                         )""")
     except sqlite3.OperationalError:
-        print("table already exists")
+        print("database or table already exists")
+        exit()
     
 
 def insert_ships():
@@ -57,7 +58,7 @@ def insert_ships():
         rand_num_weapon = randint(1, 20)
         # class instance: Ship(ship, hull, engine, weapon)
         ship_instance = Ship(f"ship-{num}", f"hull-{rand_num_hull}", f"engine-{rand_num_engine}", f"weapon-{rand_num_weapon}")
-        print(ship_instance)
+        # print(ship_instance)
 
         # the_ship_params is a tuple, contains data about one ship
         the_ship_params = (ship_instance.ship, ship_instance.hull, ship_instance.engine, ship_instance.weapon)
@@ -65,6 +66,7 @@ def insert_ships():
 
     with con:
         cur.executemany("INSERT INTO Ships (ship, hull, engine, weapon) VALUES (?, ?, ?, ?)", list_of_ships)
+
 
 
 def insert_weapons():
@@ -77,7 +79,7 @@ def insert_weapons():
         # class instance: Weapon(weapon, reload_speed, rotation_speed, diameter, power_volley, count)
         weapon_instance = Weapon(f"weapon-{num}", randint(1, 20), randint(1, 20), randint(1, 20),
                                 randint(1, 20), randint(1, 20))
-        print(weapon_instance)
+        # print(weapon_instance)
 
         the_weapon_params = (weapon_instance.weapon, weapon_instance.reload_speed, weapon_instance.rotation_speed, weapon_instance.diameter, weapon_instance.power_volley, weapon_instance.count)
         list_of_weapons.append(the_weapon_params)
@@ -96,7 +98,7 @@ def insert_hulls():
     for num in number_of_hulls:
         # class instance: Hull(hull, armor, type, capacity)
         hull_instance = Hull(f"hull-{num}", randint(1, 20), randint(1, 20), randint(1, 20))
-        print(hull_instance)
+        # print(hull_instance)
 
         the_hull_params = (hull_instance.hull, hull_instance.armor, hull_instance.type, hull_instance.capacity)
         list_of_hulls.append(the_hull_params)
@@ -115,7 +117,7 @@ def insert_engines():
     for num in number_of_engines:
         # class instance: Engine(engine, power, type)
         engine_instance = Engine(f"engine-{num}", randint(1, 20), randint(1, 20))
-        print(engine_instance)
+        # print(engine_instance)
 
         the_engine_params = (engine_instance.engine, engine_instance.power, engine_instance.type)
         # print(the_engine_params)
