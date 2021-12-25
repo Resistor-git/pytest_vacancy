@@ -1,4 +1,4 @@
 # wargaming
 task for job application
 
-Task in russian: "Задание.txt"
+Task in russian: "задание.txt"
