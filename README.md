@@ -1,3 +1,5 @@
-# Task for job application in Wargaming (Lesta)
+# Тестовое задание Wargaming (Lesta)
 
-Task in russian: "задание.txt"
+Задание для проверки понимания работы библиотеки pytest и SQL.
+
+Полный текст задания в файле: "задание.txt"
